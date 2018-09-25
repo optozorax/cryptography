@@ -226,16 +226,20 @@ Cipher::Cipher() {
 }
 
 //-----------------------------------------------------------------------------
+void Cipher::mutate(void) {
+	auto key = getKey();
+	int a = intRandom(0, alphabetSize);
+	int b = intRandom(0, alphabetSize);
+	std::swap(key[a], key[b]);
+	setKey(key);
+}
+
+//-----------------------------------------------------------------------------
 void Cipher::generateHalfRandomKey(int swapCount) {
-	std::string alphabet = getAlphabet();
+	setKey(getAlphabet());
 
-	for (int i = 0; i < swapCount; ++i) {
-		int a = intRandom(0, alphabetSize);
-		int b = intRandom(0, alphabetSize);
-		std::swap(alphabet[a], alphabet[b]);
-	}
-
-	setKey(alphabet);
+	for (int i = 0; i < swapCount; ++i)
+		mutate();
 }
 
 //-----------------------------------------------------------------------------
@@ -254,6 +258,7 @@ void Cipher::setKey(std::string key) {
 		std::string reverseKey = key;
 		for (int i = 0; i < alphabetSize; ++i)
 			reverseKey[key[i] - rus_a] = i + rus_a;
+		m_reverseKey = reverseKey;
 	}
 }
 
@@ -326,7 +331,8 @@ std::string readFromFile(std::string fileName) {
 
 	while (!fin.eof()) {
 		fin >> temp;
-		result += temp;
+		if (!fin.eof())
+			result += temp;
 	}
 	 
 	fin.close();
@@ -361,6 +367,9 @@ std::vector<std::string> readTexts(void) {
 
 //-----------------------------------------------------------------------------
 char toRussianLetters(char c) {
+	if (c == -72)
+		return rus_a + 6;
+	
 	if (c >= rus_a && c <= rus_z)
 		return c;
 	else {

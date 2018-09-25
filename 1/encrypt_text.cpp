@@ -7,6 +7,7 @@ int main() {
 	auto text = toRussianLetters(readFromFile("text.txt"));
 	auto encryptedText = cipher.encrypt(text);
 	writeToFile("key.txt", getAlphabet() + "\n" + cipher.getKey());
+	writeToFile("encrypted_text.txt", encryptedText);
 
 	Frequency f;
 	f.count(encryptedText);

@@ -68,6 +68,8 @@ class Cipher
 public:
 	Cipher();
 
+	void mutate(void);
+
 	void generateHalfRandomKey(int swapCount);
 	void generateRandomKey(void);
 	void setKey(std::string key);
