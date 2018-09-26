@@ -94,14 +94,27 @@ double metric(double a, double b);
 std::string readFromFile(std::string fileName);
 void writeToFile(std::string fileName, const std::string& text);
 
-std::vector<std::string> readTexts(void);
-
 char toRussianLetters(char c);
 std::string toRussianLetters(std::string text);
 
 std::string getRandomPart(const std::string& text, int size);
 
 std::string getAlphabet(void);
+
+//-----------------------------------------------------------------------------
+class TextReader
+{
+public:
+	TextReader(bool isTestTexts);
+
+	void readNextText(std::string& text);
+	int size(void) const;
+
+private:
+	std::string path;
+	int count;
+	int current;
+};
 
 //-----------------------------------------------------------------------------
 struct RandomValueCharacterization {
@@ -121,3 +134,5 @@ RandomValueCharacterization characterizeRandomValueByData(const std::vector<doub
 );*/
 
 void writeSortedFrequency(Frequency f, std::string fileName);
+
+double getAccuracy(const std::string& text1, const std::string& text2);

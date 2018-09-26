@@ -42,3 +42,6 @@ private:
 	int m_generations;
 	int m_m, m_n;
 };
+
+//-----------------------------------------------------------------------------
+std::string decryptByEvolution(const std::string& encrypted, bool isWriteLog);

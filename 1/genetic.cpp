@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include "genetic.h"
 
 //-----------------------------------------------------------------------------
@@ -110,4 +111,25 @@ int Evolution::getGenerationsCount(void) const {
 //-----------------------------------------------------------------------------
 Creature Evolution::getBestCreature(void) const {
 	return m_population[0];
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+std::string decryptByEvolution(const std::string& encrypted, bool isWriteLog) {
+	std::string text = encrypted;
+	Evolution ev(50, 10, &text);
+	for (int i = 0; i < 200; ++i) {
+		ev.calcGeneration();
+		if (isWriteLog)
+			std::cout 
+				<< ev.getGenerationsCount() 
+				<< "\t" 
+				<< ev.getBestCreature().getEfficiency() 
+				<< std::endl;
+	}
+
+	return ev.getBestCreature().getKey();
 }

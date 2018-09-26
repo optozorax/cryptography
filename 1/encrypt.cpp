@@ -415,6 +415,38 @@ std::string getAlphabet(void) {
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
+TextReader::TextReader(bool isTestTexts) {
+	if (isTestTexts) {
+		path = "text/0 (";
+		count = 161;
+	} else {
+		path = "test_text/0 (";
+		count = 61;
+	}
+	current = 0;
+}
+
+//-----------------------------------------------------------------------------
+void TextReader::readNextText(std::string& text) {
+	current++;
+
+	std::stringstream sout;
+	sout << path;
+	sout << current << ").txt";
+
+	text = toRussianLetters(readFromFile(sout.str()));
+}
+
+//-----------------------------------------------------------------------------
+int TextReader::size(void) const {
+	return count;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
 RandomValueCharacterization characterizeRandomValueByData(const std::vector<double>& data) {
 	RandomValueCharacterization result;
 	result.min = data[0];
@@ -437,4 +469,22 @@ RandomValueCharacterization characterizeRandomValueByData(const std::vector<doub
 	result.dispersion = sqrt(result.dispersion);
 
 	return result;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+double getAccuracy(const std::string& text1, const std::string& text2) {
+	if (text1.size() != text2.size())
+		throw std::exception();
+
+	int count = 0;
+	for (int i = 0; i < text1.size(); ++i) {
+		if (text1[i] == text2[i])
+			count++;
+	}
+
+	return double(count)/text1.size();
 }
