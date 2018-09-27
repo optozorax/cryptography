@@ -1,28 +1,47 @@
+/** ОПИСАНИЕ
+		Эта программа определяет насколько отличаются случайные тексты размером 3к символов по частотности от частотности русского языка. В файл выводятся все различия.
+
+	ОПИСАНИЕ РЕЗУЛЬТАТОВ
+		Эти данные нужны, чтобы затем сравнить их между данными, когда тексты зашифрованы ключом с m=1,n перестановками, чтобы получить потенциальную теоретическую точность расшифровки текстов длиной 3к.
+
+		Если по какому-то параметру, либо комбинации параметров получается, что тексты в среднем различаются на меньший процент, чем зашифрованный ключом с 1 перестановкой, то это означает, что в теории возможно большинство текстов расшифровать полностью.
+ */
+
 #include <fstream>
 #include <string>
 #include <iostream>
 #include <vector>
-#include <sstream>
+#include <iomanip>
 
 #include "encrypt.h"
 
 int main() {
 	//-------------------------------------------------------------------------
 	// Получаем все тексты
-	std::vector<std::string> texts = readTexts();
+	TextReader texts(true);
 
 	Frequency f;
 	f.load("frequency_table.txt");
 	
 	//-------------------------------------------------------------------------
-	// Перебираем все случайные тексты и получаем из разницу между их частями длиной 3000 символов
+	// Перебираем все случайные тексты и получаем как их частотность отличается от частотности в русском языке.
+	const int textSize = 3000;
+	const int partCount = 5;
+	const int textsCount = texts.size();
+	const int allCount = partCount * textsCount;
+	int count = 0;
+
 	std::vector<double> difference1;
 	std::vector<double> difference2;
-	for (int i = 0; i < texts.size(); ++i) {
-		for (int j = 0; j < 5; ++j) {
-			std::string text1 = getRandomPart(texts[i], 3000);
+	std::vector<double> difference3;
+	std::vector<double> differenceW;
+	for (int i = 0; i < textsCount; ++i) {
+		std::string text;
+		texts.readNextText(text);
+		for (int j = 0; j < partCount; ++j) {
+			std::string text1 = getRandomPart(text, textSize);
 
-			if (text1.size() < 3000)
+			if (text1.size() < textSize)
 				break;
 
 			Frequency f1;
@@ -30,33 +49,33 @@ int main() {
 			f1.normalize();
 
 			auto diff = f1.countDifference(f);
-			difference1.push_back(diff.first);
-			difference2.push_back(diff.second);	
+
+			difference1.push_back(diff.d1);
+			difference2.push_back(diff.d2);	
+			difference3.push_back(diff.d3);
+			differenceW.push_back(differenceMetric(diff));
+
+			// Выводим прогресс на экран
+			count++;
+			std::cout << "\r" << std::setprecision(4) << std::setw(5)  << double(count * 100)/allCount << "%";
 		}
 	}
 
 	//-------------------------------------------------------------------------
-	// Различие между случайными текстами есть случайная величина. Считаем ее минимальное, максимальное, среднее и среднеквадратичное значение
-	auto charact1 = characterizeRandomValueByData(difference1);
-	auto charact2 = characterizeRandomValueByData(difference2);
-
-	//-------------------------------------------------------------------------
 	// Выводим в файл полученные данные
-	std::ofstream fout("difference_texts.txt");
-	int digits10 = std::numeric_limits<double>::digits10;
-	fout.precision(digits10+1);
-	fout << std::fixed;
-	fout << "min1: " << charact1.min * 100 << std::endl;
-	fout << "max1: " << charact1.max * 100 << std::endl;
-	fout << "expected1: " << charact1.expected * 100 << std::endl;
-	fout << "dispersion1: " << charact1.dispersion * 100 << std::endl;
+	std::ofstream fout("difference_3k_text.txt");
 
-	fout << std::endl;
+	fout << "One letter: " << std::endl;
+	fout << characterizeRandomValueByData(difference1) << std::endl;
+	
+	fout << "Two letter: " << std::endl;
+	fout << characterizeRandomValueByData(difference2) << std::endl;
 
-	fout << "min2: " << charact2.min * 100 << std::endl;
-	fout << "max2: " << charact2.max * 100 << std::endl;
-	fout << "expected2: " << charact2.expected * 100 << std::endl;
-	fout << "dispersion2: " << charact2.dispersion * 100 << std::endl;
+	fout << "Three letter: " << std::endl;
+	fout << characterizeRandomValueByData(difference3) << std::endl;
+
+	fout << "DifferenceMetric difference: " << std::endl;
+	fout << characterizeRandomValueByData(differenceW) << std::endl;
 
 	fout.close();
 }

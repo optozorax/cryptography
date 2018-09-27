@@ -1,6 +1,16 @@
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include "genetic.h"
+
+//-----------------------------------------------------------------------------
+// Вспомогательные функции для эволюции
+std::string getStartKeyByFrequency(const std::string& encrypted);
+std::string bruteForce(const std::string& encrypted, std::string startKey, double startEfficiency, bool isWriteLog);
+
+//=============================================================================
+//=============================================================================
+//=============================================================================
 
 //-----------------------------------------------------------------------------
 const Frequency& getStandardFrequency(void) {
@@ -48,17 +58,19 @@ std::string Creature::getKey(void) const {
 
 //-----------------------------------------------------------------------------
 void Creature::countEfficiency(void) {
+	/* Как подсчитывается эффективность данной особи:
+			1. Текст расшифровывается ключом текущей особи.
+			2. Считается разница частотности расшифрованного текста и частототности русского языка.
+			3. Разница в частотности преобразуется в одно вещественное число с помощью особой функции.
+	 */
+
 	std::string decrypted = m_cipher.decrypt(*m_text);
 	Frequency f2;
 	f2.count(decrypted);
 	f2.normalize();
 	auto diff = getStandardFrequency().countDifference(f2);
-
-	double weight1 = 1;
-	double weight2 = 2;
-	double weight3 = 3;
-	double weightSum = weight1 + weight2 + weight3;
-	m_efficiency = (weight1 * diff.d1 + weight2 * diff.d2 + weight3 * diff.d3) / weightSum;
+	
+	m_efficiency = differenceMetric(diff);
 }
 
 //-----------------------------------------------------------------------------
@@ -80,6 +92,15 @@ Evolution::Evolution(int n, int m, std::string* text, std::string startKey) : m_
 
 //-----------------------------------------------------------------------------
 void Evolution::calcGeneration(void) {
+	/* Как происходит эволюция:
+			1. Выбираются лучшие m особей.
+			2. Все остальные убиваются.
+			3. Эти лучшие создают детей.
+			4. Дети мутируют.
+			5. Goto 1.
+	*/
+
+	//-------------------------------------------------------------------------
 	// Получаем эффективность каждой особи
 	std::vector<std::pair<int, double>> rank;
 	for (int i = 0; i < m_population.size(); ++i)
@@ -126,7 +147,7 @@ int Evolution::getGenerationsCount(void) const {
 }
 
 //-----------------------------------------------------------------------------
-Creature Evolution::getBestCreature(void) const {
+const Creature& Evolution::getBestCreature(void) const {
 	return m_population[0];
 }
 
@@ -136,11 +157,13 @@ Creature Evolution::getBestCreature(void) const {
 
 //-----------------------------------------------------------------------------
 std::string getStartKeyByFrequency(const std::string& encrypted) {
+	/* Генерирует ключ, от которого можно отталкиваться при дешифрации. Строит его путем подстановки вместо самых частотных известных букв, самые частотные буквы зашифрованного текста. */
+
 	Frequency f;
 	f.count(encrypted);
 	f.normalize();
 
-	std::vector<Frequency::SymbolFrequency1> f1, s1;
+	std::vector<SymbolFrequency1> f1, s1;
 	f.getSortedF1(f1);
 	getStandardFrequency().getSortedF1(s1);
 
@@ -152,27 +175,9 @@ std::string getStartKeyByFrequency(const std::string& encrypted) {
 }
 
 //-----------------------------------------------------------------------------
-std::string decryptByEvolution(const std::string& encrypted, bool isWriteLog) {
-	std::string text = encrypted;
-	Evolution ev(50, 10, &text, getStartKeyByFrequency(encrypted));
-	for (int i = 0; i < 300; ++i) {
-		ev.calcGeneration();
-		if (isWriteLog)
-			std::cout 
-				<< ev.getGenerationsCount() 
-				<< "\t" 
-				<< ev.getBestCreature().getEfficiency() 
-				<< std::endl;
-	}
-
-	std::string bestKey = ev.getBestCreature().getKey();
-
-	//return bestKey;
-	return bruteForce(encrypted, bestKey, ev.getBestCreature().getEfficiency(), isWriteLog);
-}
-
-//-----------------------------------------------------------------------------
 std::string bruteForce(const std::string& encrypted, std::string startKey, double startEfficiency, bool isWriteLog) {
+	/* Доводит ключ до идеала путем перебора всех возможных перестановок. Если такая перестановка стала лучше, чем ключ, данный изначально, повторяет тоже самое. Функция предполагает, что ключ уже почти идеален, иначе число вычислений будет астрономическим. */
+
 	std::string text = encrypted;
 
 	std::vector<std::pair<std::string, double>> population;
@@ -197,4 +202,35 @@ std::string bruteForce(const std::string& encrypted, std::string startKey, doubl
 		return bruteForce(encrypted, population[0].first, population[0].second, isWriteLog);
 	else
 		return startKey;
+}
+
+//-----------------------------------------------------------------------------
+std::string decryptByEvolution(const std::string& encrypted, bool isWriteLog) {
+	/* Расшифровывает текст при помощи частотного анализа и генетического алгоритма. */
+	const int populationSize = 50;
+	const int bestInPopulation = 10;
+	const int generationCount = 300;
+
+	std::string text = encrypted;
+
+	// Инициализируем эволюцию ключом, сформированным по частотности
+	Evolution ev(populationSize, bestInPopulation, &text, getStartKeyByFrequency(encrypted));
+
+	// Цикл по поколениям
+	for (int i = 0; i < generationCount; ++i) {
+		ev.calcGeneration();
+		if (isWriteLog)
+			std::cout << "\r" << std::setprecision(3) << std::fixed << std::setw(7)
+				<< double(ev.getGenerationsCount() * 100) / generationCount 
+				<< "%\t" 
+				<< ev.getBestCreature().getEfficiency() 
+				<< "    ";
+	}
+	if (isWriteLog)
+		std::cout << std::endl;
+
+	std::string bestKey = ev.getBestCreature().getKey();
+
+	// Возвращаем лучший ключ, доведенный до идеала полным перебором перестановок
+	return bruteForce(encrypted, bestKey, ev.getBestCreature().getEfficiency(), isWriteLog);
 }

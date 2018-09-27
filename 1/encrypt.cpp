@@ -16,11 +16,14 @@ void Frequency::clear() {
 	m_last2 = '!';
 	f1.clear();
 	f2.clear();
+	f3.clear();
 	f1.resize(alphabetSize, 0);
 	f2.resize(alphabetSize, std::vector<double>(alphabetSize, 0));
 	f3.resize(alphabetSize, std::vector<std::vector<double>>(alphabetSize, std::vector<double>(alphabetSize, 0)));
 	m_isNormalized = false;
-	m_count = 0;
+	m_count1 = 0;
+	m_count2 = 0;
+	m_count3 = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -32,17 +35,20 @@ void Frequency::count(const std::string& text) {
 		i = toRussianLetters(i);
 		if (i != '\0') {
 			i -= rus_a;
-			m_count++;
+
 			f1[i]++;
-			if (m_last2 != '!')
+			m_count1++;
+
+			if (m_last2 != '!') {
 				f2[m_last2][i]++;
+				m_count2++;
+			}
+
 			if (m_last1 != '!') {
 				f3[m_last1][m_last2][i]++;
-				if (m_last1 == m_last2 && m_last2 == i && m_last1 == rus_a + 16) {
-					std::cout << (rus_a + 16);
-					system("pause");
-				}
+				m_count3++;
 			}
+
 			m_last1 = m_last2;
 			m_last2 = i;
 		}	
@@ -55,132 +61,62 @@ void Frequency::normalize() {
 		throw std::exception();
 
 	for (auto& i : f1)
-		i /= m_count;
+		i /= m_count1;
 
 	for (auto& i : f2)
 		for (auto& j : i)
-			j /= m_count;
+			j /= m_count2;
 
 	for (auto& i : f3)
 		for (auto& j : i)
 			for (auto& k : j)
-				k /= m_count;
+				k /= m_count3;
 
 	m_isNormalized = true;
 }
 
 //-----------------------------------------------------------------------------
 void Frequency::write(std::string fileName) const {
-	if (!m_isNormalized)
-		throw std::exception();
-
+	std::vector<SymbolFrequency1> sf1;
+	std::vector<SymbolFrequency2> sf2;
+	std::vector<SymbolFrequency3> sf3;
+	getF1(sf1);
+	getF2(sf2);
+	getF3(sf3);
+	
 	std::ofstream fout(fileName);
 
-	int digits10 = std::numeric_limits<double>::digits10;
-	fout.precision(digits10+1);
-	for (int i = 0; i < alphabetSize; ++i) {
-		fout 
-			<< char(rus_a + i) 
-			<< "\t" 
-			<< std::fixed 
-			<< f1[i] 
-			<< std::endl;
-	}
+	for (auto& i : sf1)
+		fout << i << std::endl;
 	fout << std::endl;
-
-	for (int i = 0; i < alphabetSize; ++i) {
-		for (int j = 0; j < alphabetSize; ++j)
-			fout 
-				<< char(rus_a + i) 
-				<< char(rus_a + j) 
-				<< "\t" 
-				<< std::fixed 
-				<< f2[i][j] 
-				<< std::endl;		
-	}
+	for (auto& i : sf2)
+		fout << i << std::endl;
 	fout << std::endl;
-
-	for (int i = 0; i < alphabetSize; ++i) {
-		for (int j = 0; j < alphabetSize; ++j)
-			for (int k = 0; k < alphabetSize; ++k)
-				fout 
-					<< char(rus_a + i) 
-					<< char(rus_a + j)
-					<< char(rus_a + k) 
-					<< "\t" 
-					<< std::fixed 
-					<< f3[i][j][k] 
-					<< std::endl;		
-	}
+	for (auto& i : sf3)
+		fout << i << std::endl;
 
 	fout.close();
 }
 
 //-----------------------------------------------------------------------------
 void Frequency::writeSorted(std::string fileName) const {
-	std::vector<Frequency::SymbolFrequency1> sf1;
-	std::vector<Frequency::SymbolFrequency2> sf2;
-	std::vector<Frequency::SymbolFrequency3> sf3;
+	std::vector<SymbolFrequency1> sf1;
+	std::vector<SymbolFrequency2> sf2;
+	std::vector<SymbolFrequency3> sf3;
 	getSortedF1(sf1);
 	getSortedF2(sf2);
 	getSortedF3(sf3);
 	
 	std::ofstream fout(fileName);
 
-	int digits10 = std::numeric_limits<double>::digits10;
-	fout.precision(digits10+1);
-
 	for (auto& i : sf1)
-		fout << i.c1 << "\t" << std::fixed << i.f << std::endl;
-
+		fout << i << std::endl;
 	fout << std::endl;
-
 	for (auto& i : sf2)
-		fout << i.c1 << i.c2 << "\t" << std::fixed << i.f << std::endl;
-
+		fout << i << std::endl;
 	fout << std::endl;
-
 	for (auto& i : sf3)
-		fout << i.c1 << i.c2 << i.c3 << "\t" << std::fixed << i.f << std::endl;
-
-	fout.close();
-}
-
-//-----------------------------------------------------------------------------
-void Frequency::writeAsCode(std::string fileName) const {
-	if (!m_isNormalized)
-		throw std::exception();
-
-	std::ofstream fout(fileName);
-
-	fout << "std::vector<double> f1 = {";
-	int digits10 = std::numeric_limits<double>::digits10;
-	fout.precision(digits10+1);
-	for (auto& i : f1)
-		fout << std::fixed << i << ", ";
-	fout << "};" << std::endl;
-
-	fout << "std::vector<std::vector<double>> f2 = {" << std::endl;
-	for (auto& i : f2) {
-		fout << "\t{";
-		for (auto& j : i)
-			fout << std::fixed << std::setw(digits10+3) << j << ", ";
-		fout << "}," << std::endl;
-	}
-	fout << "};" << std::endl;
-
-	fout << "std::vector<std::vector<std::vector<double>>> f3 = {" << std::endl;
-	for (auto& i : f3) {
-		fout << "\t{";
-		for (auto& j : i) {
-			fout << "{";
-			for (auto& k : j)
-				fout << std::fixed << std::setw(digits10+3) << k << ", ";
-			fout << "}, ";
-		}
-		fout << "}," << std::endl;
-	}
-	fout << "};";	
+		fout << i << std::endl;
 
 	fout.close();
 }
@@ -189,28 +125,36 @@ void Frequency::writeAsCode(std::string fileName) const {
 void Frequency::load(std::string fileName) {
 	clear();
 
+	m_isNormalized = true;
+
 	std::ifstream fin(fileName);
 
-	char c;
-	for (int i = 0; i < alphabetSize; ++i)
-		fin >> c >> f1[i];
+	SymbolFrequency1 s1;
+	for (int i = 0; i < alphabetSize; ++i) {
+		fin >> s1;
+		f1[i] = s1.f;
+	}
 
+	SymbolFrequency2 s2;
+	for (int i = 0; i < alphabetSize; ++i)
+		for (int j = 0; j < alphabetSize; ++j) {
+			fin >> s2;
+			f2[i][j] = s2.f;
+		}
+
+	SymbolFrequency3 s3;
 	for (int i = 0; i < alphabetSize; ++i)
 		for (int j = 0; j < alphabetSize; ++j)
-			fin >> c >> c >> f2[i][j];
-
-	for (int i = 0; i < alphabetSize; ++i)
-		for (int j = 0; j < alphabetSize; ++j)
-			for (int k = 0; k < alphabetSize; ++k)
-				fin >> c >> c >> c >> f3[i][j][k];
+			for (int k = 0; k < alphabetSize; ++k) {
+				fin >> s3;
+				f3[i][j][k] = s3.f;
+			}
 
 	fin.close();
-
-	m_isNormalized = true;
 }
 
 //-----------------------------------------------------------------------------
-Frequency::Difference Frequency::countDifference(const Frequency& a) const {
+Difference Frequency::countDifference(const Frequency& a) const {
 	if (!m_isNormalized || !a.m_isNormalized)
 		throw std::exception();
 
@@ -219,63 +163,30 @@ Frequency::Difference Frequency::countDifference(const Frequency& a) const {
 	int64_t count2 = 0;
 	int64_t count3 = 0;
 
-	for (int i = 0; i < alphabetSize; ++i) {
+	for (int i = 0; i < alphabetSize; ++i)
 		result.d1 += metric(f1[i], a.f1[i], count1);
-		for (int j = 0; j < alphabetSize; ++j) {
+
+	for (int i = 0; i < alphabetSize; ++i)
+		for (int j = 0; j < alphabetSize; ++j)
 			result.d2 += metric(f2[i][j], a.f2[i][j], count2);
+
+	for (int i = 0; i < alphabetSize; ++i)
+		for (int j = 0; j < alphabetSize; ++j)
 			for (int k = 0; k < alphabetSize; ++k)
 				result.d3 += metric(f3[i][j][k], a.f3[i][j][k], count3);
-		}
-	}
 
 	result.d1 /= count1;
 	result.d2 /= count2;
 	result.d3 /= count3;
 
 	return result;
-}
-
-//-----------------------------------------------------------------------------
-Frequency::Difference Frequency::countDifference(const Frequency& a, char symbol) const {
-	if (!m_isNormalized || !a.m_isNormalized)
-		throw std::exception();
-
-	symbol -= rus_a;
-
-	Difference result = {};
-	int64_t count1 = 0;
-	int64_t count2 = 0;
-	int64_t count3 = 0;
-
-	result.d1 += metric(f1[symbol], a.f1[symbol], count1);
-
-	for (int i = 0; i < alphabetSize; ++i) {
-		result.d2 += metric(f2[symbol][i], a.f2[symbol][i], count2);
-		result.d2 += metric(f2[i][symbol], a.f2[i][symbol], count2);
-	}
-
-	for (int i = 0; i < alphabetSize; ++i) {
-		for (int j = 0; j < alphabetSize; ++j) {
-			result.d3 += metric(f3[symbol][i][j], a.f3[symbol][i][j], count3);
-			result.d3 += metric(f3[i][symbol][j], a.f3[i][symbol][j], count3);
-			result.d3 += metric(f3[i][j][symbol], a.f3[i][j][symbol], count3);
-		}
-	}
-
-	result.d1 /= count1;
-	result.d2 /= count2;
-	result.d3 /= count3;
-
-	return result;
-}
-
-//-----------------------------------------------------------------------------
-int64_t Frequency::getProcessedSymbolsCount(void) const {
-	return m_count;
 }
 
 //-----------------------------------------------------------------------------
 void Frequency::getF1(std::vector<SymbolFrequency1>& f) const {
+	if (!m_isNormalized)
+		throw std::exception();
+
 	f.clear();
 	f.reserve(alphabetSize);
 	for (int i = 0; i < f1.size(); ++i)
@@ -284,6 +195,9 @@ void Frequency::getF1(std::vector<SymbolFrequency1>& f) const {
 
 //-----------------------------------------------------------------------------
 void Frequency::getF2(std::vector<SymbolFrequency2>& f) const {
+	if (!m_isNormalized)
+		throw std::exception();
+
 	f.clear();
 	f.reserve(alphabetSize * alphabetSize);
 	for (int i = 0; i < f2.size(); ++i)
@@ -293,6 +207,9 @@ void Frequency::getF2(std::vector<SymbolFrequency2>& f) const {
 
 //-----------------------------------------------------------------------------
 void Frequency::getF3(std::vector<SymbolFrequency3>& f) const {
+	if (!m_isNormalized)
+		throw std::exception();
+
 	f.clear();
 	f.reserve(alphabetSize * alphabetSize * alphabetSize);
 	for (int i = 0; i < f3.size(); ++i)
@@ -323,6 +240,54 @@ void Frequency::getSortedF3(std::vector<SymbolFrequency3>& sortedF3) const {
 	std::sort(sortedF3.begin(), sortedF3.end(), [] (auto& a, auto& b) -> bool {
 		return a.f > b.f;
 	});
+}
+
+//-----------------------------------------------------------------------------
+std::ofstream& operator<<(std::ofstream& out, const SymbolFrequency1& s) {
+	int digits10 = std::numeric_limits<double>::digits10;
+	out.precision(digits10);
+	out << s.c1 << "\t" << std::fixed << std::setw(digits10 + 3) << s.f * 100.0;
+	return out;
+}
+
+//-----------------------------------------------------------------------------
+std::ofstream& operator<<(std::ofstream& out, const SymbolFrequency2& s) {
+	int digits10 = std::numeric_limits<double>::digits10;
+	out.precision(digits10);
+	out << s.c1 << s.c2 << "\t" << std::fixed << std::setw(digits10 + 3) << s.f * 100.0;
+	return out;
+}
+
+//-----------------------------------------------------------------------------
+std::ofstream& operator<<(std::ofstream& out, const SymbolFrequency3& s) {
+	int digits10 = std::numeric_limits<double>::digits10;
+	out.precision(digits10);
+	out << s.c1 << s.c2 << s.c3 << "\t" << std::fixed << std::setw(digits10 + 3) << s.f * 100;
+	return out;
+}
+
+//-----------------------------------------------------------------------------
+std::ifstream& operator>>(std::ifstream& in, SymbolFrequency1& s) {
+	char c;
+	in >> c >> s.f;
+	s.f /= 100;
+	return in;
+}
+
+//-----------------------------------------------------------------------------
+std::ifstream& operator>>(std::ifstream& in, SymbolFrequency2& s) {
+	char c;
+	in >> c >> c >> s.f;
+	s.f /= 100;
+	return in;
+}
+
+//-----------------------------------------------------------------------------
+std::ifstream& operator>>(std::ifstream& in, SymbolFrequency3& s) {
+	char c;
+	in >> c >> c >> c >> s.f;
+	s.f /= 100;
+	return in;
 }
 
 //-----------------------------------------------------------------------------
@@ -417,6 +382,22 @@ double random(void) {
 //-----------------------------------------------------------------------------
 int intRandom(int min, int max) {
 	return min + random() * (max - min);
+}
+
+//-----------------------------------------------------------------------------
+double differenceMetric(Difference diff) {
+	// В ходе экспериментов было обнаружено, что такие веса к переменным разницы дают самую большую эффективность расшифровки
+	
+	double weight1 = 1;
+	double weight2 = 2;
+	double weight3 = 3;
+	double weightSum = weight1 + weight2 + weight3;
+
+	return (
+		weight1 * diff.d1 + 
+		weight2 * diff.d2 + 
+		weight3 * diff.d3
+	) / weightSum;
 }
 
 //-----------------------------------------------------------------------------
@@ -560,6 +541,17 @@ RandomValueCharacterization characterizeRandomValueByData(const std::vector<doub
 	result.dispersion = sqrt(result.dispersion);
 
 	return result;
+}
+
+//-----------------------------------------------------------------------------
+std::ofstream& operator<<(std::ofstream& out, const RandomValueCharacterization& c) {
+	out << std::fixed << std::setprecision(4);
+	out << "expected:   " << c.expected   * 100 << "%" << std::endl;
+	out << "dispersion: " << c.dispersion * 100 << "%" << std::endl;
+	out << "min:        " << c.min        * 100 << "%" << std::endl;
+	out << "max:        " << c.max        * 100 << "%" << std::endl;
+
+	return out;
 }
 
 //-----------------------------------------------------------------------------

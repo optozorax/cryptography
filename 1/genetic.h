@@ -36,7 +36,7 @@ public:
 	void calcGeneration(void);
 	int getGenerationsCount(void) const;
 
-	Creature getBestCreature(void) const;
+	const Creature& getBestCreature(void) const;
 
 private:
 	std::string* m_text;
@@ -46,6 +46,4 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-std::string getStartKeyByFrequency(const std::string& encrypted);
 std::string decryptByEvolution(const std::string& encrypted, bool isWriteLog);
-std::string bruteForce(const std::string& encrypted, std::string startKey, double startEfficiency, bool isWriteLog);
