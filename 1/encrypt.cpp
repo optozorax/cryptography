@@ -427,7 +427,7 @@ double metric(double should, double was, int64_t& count) {
 	} else
 	if (was != 0) {
 		count++;
-		return fabs(should-was);
+		return fabs(should-was) / std::max(should, was);
 	} else
 		return 0;
 }
