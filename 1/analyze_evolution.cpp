@@ -15,7 +15,7 @@ int main() {
 	//-------------------------------------------------------------------------
 	// Перебираем все случайные тексты и получаем из разницу между их частями длиной 3000 символов
 	const int partCount = 5;
-	const int keyCount = 3;
+	const int keyCount = 5;
 	int textsCount = std::min(texts.size(), 10);
 
 	int decryptCount = partCount * keyCount * textsCount;
@@ -55,8 +55,7 @@ int main() {
 	//-------------------------------------------------------------------------
 	// Выводим в файл полученные данные
 	std::ofstream fout("evolution_analyze.txt");
-	int digits10 = std::numeric_limits<double>::digits10;
-	fout.precision(digits10+1);
+	fout.precision(4);
 	fout << std::fixed;
 	fout << "min: " << charact.min * 100 << std::endl;
 	fout << "max: " << charact.max * 100 << std::endl;

@@ -3,7 +3,7 @@
 
 int main() {
 	std::string text = toRussianLetters(readFromFile("encrypted.txt"));
-	std::string bestKey = decryptByEvolution(text);
+	std::string bestKey = decryptByEvolution(text, true);
 	writeToFile("best_creature.txt", bestKey);
 
 	Cipher cipher;

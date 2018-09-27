@@ -7,12 +7,15 @@
 #include "encrypt.h"
 
 int main() {
+	TextReader texts(false);
+
 	Frequency f;
-
-	std::vector<std::string> texts = readTexts();
-
-	for (auto& i : texts)
-		f.count(i);
+	std::string text;
+	for (int i = 0; i < texts.size(); i++) {
+		texts.readNextText(text);
+		f.count(text);
+		std::cout << ".";
+	}
 	f.normalize();
 
 	f.writeAsCode("frequency_code.cpp");

@@ -22,6 +22,7 @@ public:
 
 	void count(const std::string& text);
 	void normalize();
+	int64_t getProcessedSymbolsCount(void) const;
 
 	void write(std::string fileName) const;
 	void writeSorted(std::string fileName) const;
@@ -29,35 +30,48 @@ public:
 
 	void load(std::string fileName);
 
-	std::pair<double, double> countDifference(const Frequency& a) const;
-	std::pair<double, double> countDifference(const Frequency& a, char symbol) const;
+	//-------------------------------------------------------------------------
+	struct Difference
+	{
+		double d1, d2, d3;
+	};
 
-	int64_t getCount(void) const;
+	Difference countDifference(const Frequency& a) const;
+	Difference countDifference(const Frequency& a, char symbol) const;
 
 	//-------------------------------------------------------------------------
-	struct LetterAndNumber
+	struct SymbolFrequency1
 	{
-		char c;
+		char c1;
 		double f;
 	};
 
-	struct TwoLetterAndNumber
+	struct SymbolFrequency2
 	{
 		char c1, c2;
 		double f;
 	};
 
-	void getF1(std::vector<LetterAndNumber>& f1) const;
-	void getF2(std::vector<TwoLetterAndNumber>& f2) const;
+	struct SymbolFrequency3
+	{
+		char c1, c2, c3;
+		double f;
+	};
 
-	void getSortedF1(std::vector<LetterAndNumber>& sortedF1) const;
-	void getSortedF1(std::vector<TwoLetterAndNumber>& sortedF1) const;
+	void getF1(std::vector<SymbolFrequency1>& f1) const;
+	void getF2(std::vector<SymbolFrequency2>& f2) const;
+	void getF3(std::vector<SymbolFrequency3>& f3) const;
+
+	void getSortedF1(std::vector<SymbolFrequency1>& sortedF1) const;
+	void getSortedF2(std::vector<SymbolFrequency2>& sortedF2) const;
+	void getSortedF3(std::vector<SymbolFrequency3>& sortedF3) const;
 
 	//-------------------------------------------------------------------------
 	std::vector<double> f1;
 	std::vector<std::vector<double>> f2;
+	std::vector<std::vector<std::vector<double>>> f3;
 private:
-	char m_last;
+	char m_last1, m_last2;
 	int64_t m_count;
 	bool m_isNormalized;
 };
@@ -88,7 +102,7 @@ private:
 //-----------------------------------------------------------------------------
 double random(void);
 int intRandom(int min, int max);
-double metric(double a, double b);
+double metric(double a, double b, int64_t& count);
 
 //-----------------------------------------------------------------------------
 std::string readFromFile(std::string fileName);

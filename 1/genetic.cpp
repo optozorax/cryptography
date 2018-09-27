@@ -46,9 +46,9 @@ void Creature::countEfficiency(void) {
 	Frequency f2;
 	f2.count(decrypted);
 	f2.normalize();
-	auto diff = f2.countDifference(getStandardFrequency());
+	auto diff = getStandardFrequency().countDifference(f2);
 
-	m_efficiency = diff.first + diff.second;
+	m_efficiency = (diff.d1 + diff.d2 + diff.d3) / 3.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -121,7 +121,7 @@ Creature Evolution::getBestCreature(void) const {
 std::string decryptByEvolution(const std::string& encrypted, bool isWriteLog) {
 	std::string text = encrypted;
 	Evolution ev(50, 10, &text);
-	for (int i = 0; i < 200; ++i) {
+	for (int i = 0; i < 300; ++i) {
 		ev.calcGeneration();
 		if (isWriteLog)
 			std::cout 
