@@ -11,6 +11,7 @@ class Creature
 {
 public:
 	Creature(std::string* text);
+	Creature(std::string* text, std::string startKey);
 
 	double getEfficiency(void) const;
 	void mutate(void);
@@ -30,6 +31,7 @@ class Evolution
 {
 public:
 	Evolution(int n, int m, std::string* text);
+	Evolution(int n, int m, std::string* text, std::string startKey);
 
 	void calcGeneration(void);
 	int getGenerationsCount(void) const;
@@ -44,4 +46,6 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+std::string getStartKeyByFrequency(const std::string& encrypted);
 std::string decryptByEvolution(const std::string& encrypted, bool isWriteLog);
+std::string bruteForce(const std::string& encrypted, std::string startKey, double startEfficiency, bool isWriteLog);

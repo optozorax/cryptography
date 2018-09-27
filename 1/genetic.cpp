@@ -17,6 +17,12 @@ const Frequency& getStandardFrequency(void) {
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
+Creature::Creature(std::string* text, std::string startKey) : m_text(text) {
+	m_cipher.setKey(startKey);
+	m_cipher.mutate();
+	countEfficiency();
+}
 
 //-----------------------------------------------------------------------------
 Creature::Creature(std::string* text) : m_text(text) {
@@ -48,7 +54,11 @@ void Creature::countEfficiency(void) {
 	f2.normalize();
 	auto diff = getStandardFrequency().countDifference(f2);
 
-	m_efficiency = (diff.d1 + diff.d2 + diff.d3) / 3.0;
+	double weight1 = 1;
+	double weight2 = 2;
+	double weight3 = 3;
+	double weightSum = weight1 + weight2 + weight3;
+	m_efficiency = (weight1 * diff.d1 + weight2 * diff.d2 + weight3 * diff.d3) / weightSum;
 }
 
 //-----------------------------------------------------------------------------
@@ -60,6 +70,12 @@ void Creature::countEfficiency(void) {
 Evolution::Evolution(int n, int m, std::string* text) : m_n(n), m_m(m), m_generations(0), m_text(text) {
 	for (int i = 0; i < m_n; ++i)
 		m_population.push_back(Creature(m_text));
+}
+
+//-----------------------------------------------------------------------------
+Evolution::Evolution(int n, int m, std::string* text, std::string startKey) : m_n(n), m_m(m), m_generations(0), m_text(text) {
+	for (int i = 0; i < m_n; ++i)
+		m_population.push_back(Creature(m_text, startKey));
 }
 
 //-----------------------------------------------------------------------------
@@ -96,6 +112,7 @@ void Evolution::calcGeneration(void) {
 	for (int i = 0; i < descendantResidue; ++i) {
 		newPopulation.push_back(m_population[rank[0].first]);
 		newPopulation.back().mutate();
+		newPopulation.back().mutate();
 	}
 
 	m_population = newPopulation;
@@ -118,9 +135,26 @@ Creature Evolution::getBestCreature(void) const {
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
+std::string getStartKeyByFrequency(const std::string& encrypted) {
+	Frequency f;
+	f.count(encrypted);
+	f.normalize();
+
+	std::vector<Frequency::SymbolFrequency1> f1, s1;
+	f.getSortedF1(f1);
+	getStandardFrequency().getSortedF1(s1);
+
+	std::string key(alphabetSize, '\0');
+	for (int i = 0; i < s1.size(); ++i)
+		key[s1[i].c1 - rus_a] = f1[i].c1;
+
+	return key;
+}
+
+//-----------------------------------------------------------------------------
 std::string decryptByEvolution(const std::string& encrypted, bool isWriteLog) {
 	std::string text = encrypted;
-	Evolution ev(50, 10, &text);
+	Evolution ev(50, 10, &text, getStartKeyByFrequency(encrypted));
 	for (int i = 0; i < 300; ++i) {
 		ev.calcGeneration();
 		if (isWriteLog)
@@ -131,5 +165,36 @@ std::string decryptByEvolution(const std::string& encrypted, bool isWriteLog) {
 				<< std::endl;
 	}
 
-	return ev.getBestCreature().getKey();
+	std::string bestKey = ev.getBestCreature().getKey();
+
+	//return bestKey;
+	return bruteForce(encrypted, bestKey, ev.getBestCreature().getEfficiency(), isWriteLog);
+}
+
+//-----------------------------------------------------------------------------
+std::string bruteForce(const std::string& encrypted, std::string startKey, double startEfficiency, bool isWriteLog) {
+	std::string text = encrypted;
+
+	std::vector<std::pair<std::string, double>> population;
+	for (int i = 0; i < alphabetSize; ++i) {
+		for (int j = i+1; j < alphabetSize; ++j) {
+			std::string newKey = startKey;	
+			std::swap(newKey[i], newKey[j]);
+			
+			Creature creature(&text, newKey);
+			population.push_back({newKey, creature.getEfficiency()});
+		}
+	}
+
+	std::sort(population.begin(), population.end(), [] (auto a, auto b) -> bool {
+		return a.second < b.second;
+	});
+
+	if (isWriteLog)
+		std::cout << "BruteForce\t" << population[0].second << std::endl;
+
+	if (population[0].second < startEfficiency)
+		return bruteForce(encrypted, population[0].first, population[0].second, isWriteLog);
+	else
+		return startKey;
 }
