@@ -44,6 +44,10 @@ int main() {
 	const int decryptCount = partCount * keyCount * textsCount;
 	int count = 0;
 
+	double min = 2;
+	std::string minText;
+	std::string minKey;
+
 	std::vector<double> accuracy;
 	for (int i = 0; i < textsCount; ++i) { // Цикл по текстам
 		std::string text;
@@ -64,6 +68,13 @@ int main() {
 				std::string decrypted = cipher.decrypt(encrypted);
 				accuracy.push_back(getAccuracy(original, decrypted));
 
+				// Запоминаем худший текст, чтобы затем изучить почему он так плохо расшифровался
+				if (accuracy.back() < min) {
+					min = accuracy.back();
+					minText = original;
+					minKey = cipher.getKey();
+				}
+
 				// Выводим прогресс на экран
 				count++;
 				std::cout << "\r" << std::setw(5) << std::setprecision(4) << double(count * 100)/decryptCount << "%";
@@ -76,4 +87,6 @@ int main() {
 	std::ofstream fout("evolution_efficiency.txt");
 	fout << characterizeRandomValueByData(accuracy);
 	fout.close();
+
+	writeToFile("evolution_analysis_worst_text.txt", minText + "\n\n" + minKey);
 }
