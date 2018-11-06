@@ -1,22 +1,17 @@
 #include <iostream>
-#include <fstream>
 #include <random>
 #include <cmath>
 
 using std::cin;
 using std::cout;
 using std::endl;
-using std::pair;
-typedef uint64_t data;
-#define L 0
-#define R INT32_MAX
 
 
 // Алгоритм быстрого возведения в степень в поле вычета mod
-data fastPow(data num, data deg, data mod) {
+uint64_t fastPow(uint64_t num, uint64_t deg, uint64_t mod) {
 
-	data result = 1;
-	data bit = num % mod;
+	uint64_t result = 1;
+	uint64_t bit = num % mod;
 
 	while (deg > 0) {
 
@@ -34,7 +29,7 @@ data fastPow(data num, data deg, data mod) {
 
 
 // Проверка числа на простоту при помощи решета Эрастофена
-bool isPrime(data num) {
+bool isPrime(uint64_t num) {
 
 	if (num <= 3) {			// 2 и 3 простые
 		return num > 1;		// а 1 - нет
@@ -54,31 +49,27 @@ bool isPrime(data num) {
 
 
 // Генерация случайного числа
-data getRandomNumber() {
+uint64_t getRandomNumber() {
 
-	std::random_device rd;
-	std::mt19937 generator(rd());
-	std::uniform_int_distribution<> distribution(L, R);
+	static std::mt19937 generator(917401);
+	static std::uniform_int_distribution<> distribution(0, INT32_MAX);
 	return distribution(generator);
 }
 
 
 // Генерация простого числа длинной LENGTH бит
-data getPrimeNumber() {
-	std::random_device rd;
-	std::mt19937 generator(rd());
-	std::uniform_int_distribution<> distribution(L, R);
+uint64_t getPrimeNumber() {
 
-	data n;
+	uint64_t n;
 	do {
-		n = distribution(generator);
+		n = getRandomNumber();
 	} while (!isPrime(n));
 	return n;
 }
 
 
 // Поиск p и k
-void get_p_and_k(data &p, data &k) {
+void calc_p_and_k(uint64_t &p, uint64_t &k) {
 
 	int i = 0;
 	k = 1, p = 4;
@@ -90,9 +81,9 @@ void get_p_and_k(data &p, data &k) {
 
 
 // Поиск примитивного корня g
-data getPrimitiveRoot(data p, data k) {
+uint64_t calcPrimitiveRoot(uint64_t p, uint64_t k) {
 
-	data g;
+	uint64_t g;
 	while (true) {
 
 		g = getPrimeNumber();
@@ -103,22 +94,23 @@ data getPrimitiveRoot(data p, data k) {
 }
 
 
+
 void main() {
 
-	data p, g, B;
+	uint64_t p, g, B;
 	cout << "Enter p: ";
 	cin >> p;
 	cout << "Enter g: ";
 	cin >> g;
 
-	data a = getRandomNumber();
+	uint64_t a = getRandomNumber();
 	cout << "a = " << a << endl;
-	data A = fastPow(g, a, p);
+	uint64_t A = fastPow(g, a, p);
 	cout << "A = " << A << endl;
 
 	cout << "Enter B: ";
 	cin >> B;
 
-	data K = fastPow(B, a, p);
+	uint64_t K = fastPow(B, a, p);
 	cout << "K = " << K << endl;
 }

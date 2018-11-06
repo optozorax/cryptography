@@ -1,28 +1,25 @@
 #include <iostream>
-#include <random>
+#include <random>  
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/multiprecision/miller_rabin.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random.hpp>
 
-
 using namespace boost::multiprecision;
-using namespace boost::random;
 using std::cin;
 using std::cout;
 using std::endl;
-using std::pair;
-typedef cpp_int data;
-#define ITER 25
-#define LENGTH 1024
+
+const int ITER = 25;
+const int LENGTH = 1024;
 
 
 // Алгоритм быстрого возведения в степень в поле вычета mod
-data& fastPow(data &num, const data &deg_param, const data &mod) {
+cpp_int fastPow(cpp_int &num, const cpp_int &deg_param, const cpp_int &mod) {
 
-	data result = 1;
-	data bit = num % mod;
-	data deg = deg_param;
+	cpp_int result = 1;
+	cpp_int bit = num % mod;
+	cpp_int deg = deg_param;
 
 	while (deg > 0) {
 
@@ -40,28 +37,27 @@ data& fastPow(data &num, const data &deg_param, const data &mod) {
 
 
 // Генерация случайного числа
-data& getRandomNumber() {
+cpp_int getRandomNumber() {
 
-	mt11213b base_gen(clock());
-	independent_bits_engine<mt11213b, LENGTH, data> gen(base_gen);
-	return gen();
+	static boost::random::mt19937 generator(917401);
+	static boost::random::uniform_int_distribution<cpp_int> distribution(0, cpp_int(1) << LENGTH);
+	return distribution(generator);
 }
 
-// Генерация простого числа длинной LENGTH бит
-data& getPrimeNumber() {
 
-	mt11213b base_gen(clock());
-	independent_bits_engine<mt11213b, LENGTH, data> gen(base_gen);
-	data n;
+// Генерация простого числа длинной LENGTH бит
+cpp_int getPrimeNumber() {
+
+	cpp_int n;
 	do {
-		n = gen();
+		n = getRandomNumber();
 	} while (!miller_rabin_test(n, ITER));
 	return n;
 }
 
 
 // Поиск p и k
-void get_p_and_k(data &p, data &k) {
+void calc_p_and_k(cpp_int &p, cpp_int &k) {
 
 	int i = 0;
 	k = 1, p = 4;
@@ -75,9 +71,9 @@ void get_p_and_k(data &p, data &k) {
 
 
 // Поиск примитивного корня g
-data& getPrimitiveRoot(data p, data k) {
+cpp_int calcPrimitiveRoot(cpp_int p, cpp_int k) {
 
-	data g;
+	cpp_int g;
 	while (true) {
 
 		g = getPrimeNumber();
@@ -89,22 +85,23 @@ data& getPrimitiveRoot(data p, data k) {
 
 
 
+
 void main() {
 
-	data p, g, B;
+	cpp_int p, g, B;
 	cout << "Enter p: ";
 	cin >> p;
 	cout << "Enter g: ";
 	cin >> g;
 
-	data a = getRandomNumber();
+	cpp_int a = getRandomNumber();
 	cout << "a = " << a << endl;
-	data A = fastPow(g, a, p);
+	cpp_int A = fastPow(g, a, p);
 	cout << "A = " << A << endl;
 
 	cout << "Enter B: ";
 	cin >> B;
 
-	data K = fastPow(B, a, p);
+	cpp_int K = fastPow(B, a, p);
 	cout << "K = " << K << endl;
 }
