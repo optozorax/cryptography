@@ -32,8 +32,8 @@ class Program
             Console.Write("Input their public key:");
             string str = Console.ReadLine();
             TheirPublicKey = StringToByteArray(str);
-            byte[] sendKey = ecd.DeriveKeyMaterial(CngKey.Import(TheirPublicKey, CngKeyBlobFormat.EccPublicBlob));
-            Console.WriteLine("Our secret key: {0}", BitConverter.ToString(OurPublicKey).Replace("-", "").ToLowerInvariant());
+            byte[] ourSecret = ecd.DeriveKeyMaterial(CngKey.Import(TheirPublicKey, CngKeyBlobFormat.EccPublicBlob));
+            Console.WriteLine("Our secret key: {0}", BitConverter.ToString(ourSecret).Replace("-", "").ToLowerInvariant());
         }
     }
 
